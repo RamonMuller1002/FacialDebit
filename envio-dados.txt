@@ -1,0 +1,140 @@
+Transmissão de dados pode ser feita através dos meios:
+    ESP8266 ou ESP32 (Wi-Fi).
+    SIM800L (GPRS).
+    HC-05 (Bluetooth).
+
+
+    Exemplo com ESP8266:
+    Conecte o ESP8266 ao Arduino.
+    Use a biblioteca WiFiClient para enviar os dados capturados para a API.
+    Adicione o seguinte trecho ao código para enviar os dados via HTTP POST:
+
+
+
+#include <ESP8266WiFi.h>
+
+const char* ssid = "SEU_SSID";
+const char* password = "SUA_SENHA";
+const char* server = "http://sua-api.com/upload";
+
+WiFiClient client;
+
+void enviarImagem() {
+    if (client.connect(server, 80)) {
+        client.println("POST /upload HTTP/1.1");
+        client.println("Host: sua-api.com");
+        client.println("Content-Type: image/jpeg");
+        client.println("Connection: close");
+        client.print("Content-Length: ");
+        client.println(tamanhoImagem); // Substitua pelo tamanho real da imagem
+        client.println();
+        client.write(bufferImagem, tamanhoImagem); // Substitua pelo buffer da imagem
+        client.stop();
+    }
+}
+
+
+
+
+
+
+
+
+/* Para ESP2866 */
+#include <Wire.h>
+#include <ArduCAM.h>
+#include <SPI.h>
+#include <WiFi.h>
+
+#define CS_PIN 16 // Pino CS do ArduCAM
+
+ArduCAM myCAM(OV2640, CS_PIN);
+
+void setup() {
+    Serial.begin(115200);
+    Wire.begin();
+    SPI.begin();
+
+    // Inicializa a câmera
+    myCAM.initCAM();
+    myCAM.set_format(JPEG);
+    myCAM.InitCAM();
+    Serial.println("Câmera inicializada!");
+}
+
+void loop() {
+    myCAM.flush_fifo();
+    myCAM.start_capture();
+
+    while (!myCAM.get_bit(ARDUCHIP_TRIG, CAP_DONE_MASK)) {
+        delay(10);
+    }
+
+    Serial.println("Imagem capturada!");
+    // Aqui você pode enviar os dados da imagem via Wi-Fi ou salvar em um cartão SD
+}
+
+
+
+
+
+/*Para Arduino*/
+
+Para que o Arduino funcione como uma câmera transmissora, você precisará de um módulo de câmera compatível e de um método para transmitir os dados capturados para outro dispositivo ou API. Aqui está um guia passo a passo para implementar isso:
+
+1. Escolha do Módulo de Câmera
+Use um módulo de câmera compatível com Arduino (OV7670, ArduCAM Mini)
+
+2. Conexão do Módulo de Câmera
+Conecte o módulo de câmera ao Arduino. Para o ArduCAM Mini, os pinos principais são:
+(CS), (MOSI, MISO, SCK) (GND e VCC)
+
+
+3. Configuração do Código
+Use a biblioteca oficial do ArduCAM para capturar imagens e transmiti-las. Você pode instalar a biblioteca pelo Gerenciador de Bibliotecas do Arduino IDE.
+
+
+/* Para capturar com ArduCAM e transmitir por SERIAL*/
+#include <Wire.h>
+#include <ArduCAM.h>
+#include <SPI.h>
+
+#define CS_PIN 10 // Pino CS do ArduCAM
+
+ArduCAM myCAM(OV2640, CS_PIN);
+
+void setup() {
+    Serial.begin(115200); // Comunicação Serial
+    Wire.begin();
+    SPI.begin();
+
+    // Inicializa a câmera
+    myCAM.initCAM();
+    myCAM.set_format(JPEG);
+    myCAM.InitCAM();
+    Serial.println("Câmera inicializada!");
+}
+
+void loop() {
+    // Captura a imagem
+    myCAM.flush_fifo();
+    myCAM.start_capture();
+
+    while (!myCAM.get_bit(ARDUCHIP_TRIG, CAP_DONE_MASK)) {
+        delay(10); // Aguarda a captura
+    }
+
+    Serial.println("Imagem capturada!");
+
+    // Envia os dados da imagem via Serial
+    uint8_t temp;
+    myCAM.CS_LOW();
+    myCAM.set_fifo_burst();
+    while (SPI.transfer(0x00) != 0xD9) { // 0xD9 é o marcador de fim de imagem JPEG
+        temp = SPI.transfer(0x00);
+        Serial.write(temp); // Envia byte a byte
+    }
+    myCAM.CS_HIGH();
+
+    delay(5000); // Aguarda 5 segundos antes de capturar novamente
+}
