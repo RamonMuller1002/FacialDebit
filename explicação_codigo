@@ -1,0 +1,5 @@
+O código usa um ESP32 com o módulo de câmera ArduCAM OV2640 para capturar uma imagem no
+formato JPEG, conectar-se ao Wi-Fi e enviar essa imagem para uma API via HTTP. Junto com a imagem, é
+enviado um ID biométrico simulado (como "usuario_123") no cabeçalho da requisição. A imagem é capturada,
+lida da memória interna da câmera e enviada como dados binários.
+O processo se repete a cada 5 segundos.
