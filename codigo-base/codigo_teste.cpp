@@ -5,7 +5,7 @@
 #include <HTTPClient.h>
 
 // Configurações da câmera
-#define CS_PIN 5 // GPIO5 é comum no ESP32 para CS
+#define CS_PIN 5
 ArduCAM myCAM(OV2640, CS_PIN);
 
 // Configurações da rede Wi-Fi
@@ -13,7 +13,7 @@ const char* ssid = "SEU_SSID";
 const char* password = "SUA_SENHA";
 
 // URL da API que receberá a imagem
-const char* serverUrl = "http_do_server";
+const char* serverUrl = "http://server/api/reconhecimento";
 
 // ID biométrico simulado (poderia vir de um leitor biométrico)
 String biometricID = "usuario_123";
@@ -33,11 +33,13 @@ void setup() {
   Serial.println("\nWi-Fi conectado");
 
   // Inicializa a câmera
-  myCAM.initCAM();
-  myCAM.set_format(JPEG);
-  myCAM.InitCAM();
-  myCAM.OV2640_set_JPEG_size(OV2640_320x240); // Resolução mais leve
+  pinMode(CS_PIN, OUTPUT);
+  digitalWrite(CS_PIN, HIGH);
+
+  myCAM.write_reg(ARDUCHIP_MODE, 0x00);
+  myCAM.OV2640_set_JPEG_size(OV2640_320x240); // resolução leve
   delay(1000);
+
   Serial.println("Câmera inicializada!");
 }
 
@@ -53,7 +55,6 @@ void loop() {
 
   Serial.println("Imagem capturada!");
 
-  // Lê os dados da imagem da FIFO
   uint32_t len = myCAM.read_fifo_length();
   Serial.printf("Tamanho da imagem: %lu bytes\n", len);
 
@@ -62,7 +63,6 @@ void loop() {
     return;
   }
 
-  // Aloca buffer para imagem
   uint8_t* imageBuffer = (uint8_t*)malloc(len);
   if (!imageBuffer) {
     Serial.println("Erro de memória.");
@@ -76,16 +76,25 @@ void loop() {
   }
   myCAM.CS_HIGH();
 
-  // Envia a imagem para a API
   if (WiFi.status() == WL_CONNECTED) {
     HTTPClient http;
     http.begin(serverUrl);
     http.addHeader("Content-Type", "application/octet-stream");
-    http.addHeader("Biometric-ID", biometricID); // Cabeçalho customizado
+    http.addHeader("Biometric-ID", biometricID);
 
     int httpResponseCode = http.POST(imageBuffer, len);
+
     if (httpResponseCode > 0) {
-      Serial.printf("Imagem enviada! Código de resposta: %d\n", httpResponseCode);
+      String response = http.getString();
+      Serial.printf("Resposta da API: %s\n", response.c_str());
+
+      // Supondo que a API retorne algo como {"match":true,"user":"Elias"}
+      if (response.indexOf("\"match\":true") != -1) {
+        Serial.println(" Rosto reconhecido, Acesso liberado.");
+      } else {
+        Serial.println(" Rosto não compatível, Acesso negado");
+      }
+
     } else {
       Serial.printf("Erro ao enviar: %s\n", http.errorToString(httpResponseCode).c_str());
     }
@@ -93,6 +102,6 @@ void loop() {
     http.end();
   }
 
-  free(imageBuffer); // Libera memória
-  delay(5000); // Aguarda 5s para próxima captura
+  free(imageBuffer);
+  delay(5000); // espera antes da próxima captura
 }
