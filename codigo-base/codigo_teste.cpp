@@ -9,8 +9,8 @@
 ArduCAM myCAM(OV2640, CS_PIN);
 
 // Configurações da rede Wi-Fi
-const char* ssid = "SEU_SSID";
-const char* password = "SUA_SENHA";
+auto ssid = "SEU_SSID";
+auto password = "SUA_SENHA";
 
 // URL da API que receberá a imagem
 const char* serverUrl = "http://server/api/reconhecimento";
@@ -20,6 +20,7 @@ String biometricID = "usuario_123";
 
 void setup() {
   Serial.begin(115200);
+  int Wire;
   Wire.begin();
   SPI.begin();
 
