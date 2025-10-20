@@ -1,0 +1,48 @@
+*{
+    padding: 0;
+    margin: 0;
+    font-family: Arial, sans-serif;
+}
+
+
+body {
+    background-color: #f4f4f4;
+    /* display: flex; */
+}
+
+
+footer{
+    background-color: #333;
+    padding: 10px;
+    display : grid;
+    color: white;
+    text-align: center;
+}
+
+.contatos-list{
+    margin-bottom: 0;
+    list-style-type: square;
+    color: white;
+    display: table-row;
+    align-items: center;
+    width: 1000px;
+}
+.btn{
+    background-color: aqua;
+    border: none;
+    padding: 8px;
+    width: 200px;
+    border-radius: 10px;
+}
+.container{
+    justify-content: center;
+    align-items: center;
+    width: 200px;
+    margin: 10px;
+    margin-left:40%;
+}
+.btn_footer{
+    width: 100px;
+    margin-left: 50px;
+    margin-right: 50px;
+}
